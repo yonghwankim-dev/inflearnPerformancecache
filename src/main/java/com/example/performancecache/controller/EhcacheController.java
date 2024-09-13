@@ -9,15 +9,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
 public class EhcacheController {
-    private CacheManager cacheManager;
+    private final CacheManager cacheManager;
 
     public EhcacheController(CacheManager cacheManager)
     {
@@ -25,13 +27,13 @@ public class EhcacheController {
     }
 
     @GetMapping("/ehcache")
+    @SuppressWarnings(value = "unchecked")
     public Object findAll(){
-        List<Map<String, List<String>>> result = cacheManager.getCacheNames().stream()
+        return cacheManager.getCacheNames().stream()
                 .map(cacheName -> {
                     EhCacheCache cache = (EhCacheCache) cacheManager.getCache(cacheName);
-                    Ehcache ehcache = cache.getNativeCache();
-                    Map<String, List<String>> entry = new HashMap<>();
-
+					Ehcache ehcache = Objects.requireNonNull(cache).getNativeCache();
+					Map<String, List<String>> entry = new HashMap<>();
                     ehcache.getKeys().forEach(key -> {
                         Element element = ehcache.get(key);
                         if (element != null) {
@@ -42,8 +44,6 @@ public class EhcacheController {
                     return entry;
                 })
                 .collect(Collectors.toList());
-
-        return result;
     }
 }
 
